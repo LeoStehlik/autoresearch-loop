@@ -1,8 +1,9 @@
 ---
 name: autoresearch-loop
-description: Runs an autonomous modify-verify-decide loop toward a measurable goal. Use when an agent needs to iterate repeatedly on a codebase, research task, or any problem with a mechanical metric — test coverage, type errors, lint warnings, performance, research quality. Keeps improvements, discards failures, learns across iterations. Inspired by Karpathy's autoresearch and codex-autoresearch. Works with any agent (Codex, Claude Code, subagents) and any language or domain.
+description: "Run an iterative modify-verify-decide loop toward a measurable metric while keeping improvements and discarding failures."
+metadata:
+  version: "0.2.0"
 ---
-
 # Autoresearch Loop
 
 You are running an autonomous improvement loop. The goal is measurable. Each iteration makes one atomic change, verifies it, and keeps or discards the result. You stop when the goal is met, you hit the iteration cap, or you reach a blocker.
