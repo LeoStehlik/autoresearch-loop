@@ -1,8 +1,10 @@
 # autoresearch-loop
 
-An autonomous modify-verify-decide loop for any agent and any measurable goal.
+A bounded modify-verify-decide loop for agents working toward a measurable goal.
 
-You give it a goal and a metric. It iterates — making one atomic change at a time, verifying, keeping improvements, discarding failures — until the goal is met or you stop it. It learns across iterations and knows when to escalate.
+You give it a goal, a metric, verification commands, scope, rollback rules, and an iteration cap. It makes one atomic change at a time, verifies the result, keeps improvements, discards failures, and stops when the approved contract says to stop.
+
+This is not a silent background coding daemon. Foreground review is the default. Background or unattended operation requires explicit approval, a fixed scope, a rollback strategy, and an iteration cap.
 
 ---
 
@@ -10,10 +12,30 @@ You give it a goal and a metric. It iterates — making one atomic change at a t
 
 - Runs a tight modify-verify-keep/discard loop toward a measurable target
 - Separates **Verify** (did the metric improve?) from **Guard** (did anything else break?)
-- Escalates intelligently: REFINE after 3 failures, PIVOT after 5, web search after 2 pivots, soft blocker after 3 pivots
-- Extracts lessons after every iteration and uses them to bias future hypotheses
+- Requires an approved run contract before edits begin
+- Keeps edits inside approved files/directories
+- Uses version-control snapshots or commits so failures can be discarded cleanly
+- Escalates intelligently: REFINE after 3 failures, PIVOT after 5, ask before external research unless pre-approved, soft blocker after repeated dead ends
+- Extracts lessons after kept iterations and pivots
 - Prevents context drift on long runs by re-reading instructions every 10 iterations
 - Works for anything with a number: test coverage, type errors, lint warnings, performance, research quality, translation completeness
+
+---
+
+## Safety Model
+
+Before the loop starts, the agent must confirm:
+
+- goal, metric, baseline, and target
+- exact verify and guard commands
+- allowed edit scope and forbidden paths
+- rollback strategy
+- foreground or explicitly approved background mode
+- iteration cap
+- whether external search is allowed
+- private-data boundary
+
+The loop must stop instead of improvising when the metric cannot be measured, scope is unclear, guard files need changing, rollback is unsafe, or external research would expose private material.
 
 ---
 
@@ -49,32 +71,39 @@ Copy `SKILL.md` and the `references/` folder into your project's skills director
 
 Say what you want in one sentence:
 
-```
+```text
 $autoresearch-loop
-Reduce TypeScript `any` types to zero in src/**/*.ts
+Reduce TypeScript `any` types in src/**/*.ts without breaking tests.
 ```
 
-The agent will:
-1. Scan and confirm: goal, metric, verify command, guard command, scope
-2. Ask: foreground (current session) or background (unattended)?
-3. Ask: run until done, or cap at N iterations?
-4. Start on "go"
+The agent will confirm a run contract before making edits:
+
+1. Goal and target metric
+2. Verify command
+3. Guard command
+4. Edit scope and forbidden paths
+5. Rollback strategy
+6. Foreground/background mode
+7. Iteration cap
+8. External research policy
+
+The loop starts only after you approve the contract and say go.
 
 ---
 
 ## The Loop
 
-```
-read state + lessons
+```text
+read contract + state + lessons
 pick ONE hypothesis
-make ONE atomic change
-commit
+make ONE scoped atomic change
+snapshot or commit
 run VERIFY
 run GUARD
 keep / discard / rework
 log result
-check escalation ladder
-repeat
+check escalation and safety gates
+repeat only within approved cap
 ```
 
 ---
@@ -85,7 +114,7 @@ repeat
 |---------|--------|
 | 3 consecutive discards | REFINE - adjust within current strategy |
 | 5 consecutive discards | PIVOT - fundamentally different approach |
-| 2 PIVOTs without improvement | Web search for external solutions |
+| 2 PIVOTs without improvement | Ask before external research unless pre-approved |
 | 3 PIVOTs without improvement | Soft blocker - stop and report to human |
 
 A single successful keep resets all counters.
@@ -94,7 +123,7 @@ A single successful keep resets all counters.
 
 ## What's Inside
 
-```
+```text
 autoresearch-loop/
 ├── SKILL.md                          Core loop rules + decision protocol
 └── references/
@@ -107,7 +136,7 @@ autoresearch-loop/
 
 ## Inspiration
 
-Inspired by [Karpathy's autoresearch](https://github.com/karpathy/autoresearch) and [codex-autoresearch](https://github.com/leo-lilinxiao/codex-autoresearch). Built as our own clean, agent-agnostic implementation.
+Inspired by Karpathy's autoresearch and codex-autoresearch. Built as our own clean, agent-agnostic implementation.
 
 ---
 
